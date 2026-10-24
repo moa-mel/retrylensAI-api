@@ -1,0 +1,51 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Incident {
+  id             Int         @id @default(autoincrement())
+  title          String
+  method         String
+  path           String
+  statusCode     Int
+  requestId      String      @unique
+  timestamp      DateTime
+  headers        Json
+  payload        Json
+  responseBody   Json
+  logs           String[]
+  scenario       String
+  replayVerified Boolean     @default(false)
+  diagnoses      Diagnosis[]
+  replays        ReplayRun[]
+  createdAt      DateTime    @default(now())
+}
+
+model Diagnosis {
+  id              Int      @id @default(autoincrement())
+  incidentId      Int
+  incident        Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  result          Json
+  evidenceChecked Boolean  @default(false)
+  createdAt       DateTime @default(now())
+}
+
+model ReplayRun {
+  id           Int      @id @default(autoincrement())
+  incidentId   Int
+  incident     Incident @relation(fields: [incidentId], references: [id], onDelete: Cascade)
+  mode         String
+  passed       Boolean
+  assertions   Json
+  executionLog String[]
+  ranAt        DateTime @default(now())
+}
