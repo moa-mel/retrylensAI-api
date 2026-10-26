@@ -1,9 +1,6 @@
 
-import { Incident } from './interfaces';
-
-export const INCIDENTS: Incident[] = [
+export const INCIDENTS =[
   {
-    id: 'incident-001',
     title: 'Payment webhook',
     method: 'POST',
     path: '/webhooks/payment',
@@ -27,7 +24,6 @@ export const INCIDENTS: Incident[] = [
     replayVerified: false,
   },
   {
-    id: 'incident-002',
     title: 'Inventory callback',
     method: 'POST',
     path: '/webhooks/inventory',
@@ -50,7 +46,6 @@ export const INCIDENTS: Incident[] = [
     replayVerified: false,
   },
   {
-    id: 'incident-003',
     title: 'Order event',
     method: 'POST',
     path: '/webhooks/order',
