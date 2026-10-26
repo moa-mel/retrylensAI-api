@@ -9,9 +9,15 @@ const DiagnosisSchema = z.object({
   confidence: z.number().min(0).max(1),
   evidence: z.array(
     z.object({
-      source: z.string(),
-      excerpt: z.string(),
-      explanation: z.string(),
+      source: z.enum([
+        'logs',
+        'request',
+        'headers',
+        'payload',
+        'response',
+      ]),
+      excerpt: z.string().min(1),
+      explanation: z.string().min(1),
     }),
   ),
   recommendedFix: z.string().min(1),
@@ -102,6 +108,48 @@ export class AnalysisService {
             ],
             generationConfig: {
               responseMimeType: 'application/json',
+              responseSchema: {
+                type: 'OBJECT',
+                properties: {
+                  summary: { type: 'STRING' },
+                  rootCause: { type: 'STRING' },
+                  confidence: { type: 'NUMBER' },
+                  evidence: {
+                    type: 'ARRAY',
+                    items: {
+                      type: 'OBJECT',
+                      properties: {
+                        source: {
+                          type: 'STRING',
+                          enum: [
+                            'logs',
+                            'request',
+                            'headers',
+                            'payload',
+                            'response',
+                          ],
+                        },
+                        excerpt: { type: 'STRING' },
+                        explanation: { type: 'STRING' },
+                      },
+                      required: ['source', 'excerpt', 'explanation'],
+                    },
+                  },
+                  recommendedFix: { type: 'STRING' },
+                  regressionTests: {
+                    type: 'ARRAY',
+                    items: { type: 'STRING' },
+                  },
+                },
+                required: [
+                  'summary',
+                  'rootCause',
+                  'confidence',
+                  'evidence',
+                  'recommendedFix',
+                  'regressionTests',
+                ],
+              },
               temperature: 0.2,
             },
           }),
@@ -120,9 +168,30 @@ export class AnalysisService {
     }
 
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts
+
+    const candidate = data?.candidates?.[0];
+
+    if (!candidate) {
+      console.error('Gemini returned no candidate', {
+        promptFeedback: data?.promptFeedback,
+        responseKeys: Object.keys(data ?? {}),
+      });
+
+      throw new BadGatewayException(
+        'The AI service returned no diagnosis candidate.',
+      );
+    }
+
+    if (candidate.finishReason === 'MAX_TOKENS') {
+      throw new BadGatewayException(
+        'The AI diagnosis was truncated. Try a shorter incident payload.',
+      );
+    }
+
+    const text = candidate.content?.parts
       ?.map((part: { text?: string }) => part.text ?? '')
-      .join('');
+      .join('')
+      .trim();
 
     if (!text) {
       throw new BadGatewayException(
@@ -133,9 +202,7 @@ export class AnalysisService {
     let parsed: unknown;
 
     try {
-      parsed = JSON.parse(
-        text.replace(/```json|```/g, '').trim(),
-      );
+      parsed = JSON.parse(text);
     } catch {
       throw new BadGatewayException(
         'The AI service returned invalid JSON.',
@@ -145,6 +212,11 @@ export class AnalysisService {
     const checked = DiagnosisSchema.safeParse(parsed);
 
     if (!checked.success) {
+      console.error(
+        'Diagnosis schema mismatch',
+        JSON.stringify(checked.error.issues, null, 2),
+      );
+
       throw new BadGatewayException(
         'The AI diagnosis did not match the expected schema.',
       );
