@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from "@nestjs/common";
 import { IncidentsService } from "./services";
 import { IncidentsController } from "./controllers";
 import { AnalysisModule } from "../analysis";
@@ -12,9 +12,16 @@ import { IncidentCaptureMiddleware } from "./middleware/incident-capture.middlew
   ],
   providers: [
     IncidentsService,
-    IncidentCaptureMiddleware
+    IncidentCaptureMiddleware,
   ],
   controllers: [IncidentsController],
   exports: [IncidentsService],
 })
-export class IncidentsModule {}
+export class IncidentsModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(IncidentCaptureMiddleware)
+      .exclude({ path: 'api/v1/incidents/*path', method: RequestMethod.ALL })
+      .forRoutes('*');
+  }
+}
