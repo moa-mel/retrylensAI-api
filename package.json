@@ -30,6 +30,7 @@
     "@nestjs/swagger": "^11.4.7",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.5.0",
+    "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "helmet": "^8.3.0",
     "moment-logger": "^1.0.5-12",

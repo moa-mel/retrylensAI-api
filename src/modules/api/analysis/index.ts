@@ -4,7 +4,6 @@ import { AnalysisService } from "./services";
 @Module ({
   imports: [],
   providers: [AnalysisService],
-//   controllers: [AnalysisController],
-//   exports: [AnalysisService],
+  exports: [AnalysisService]
 })
 export class AnalysisModule {}
