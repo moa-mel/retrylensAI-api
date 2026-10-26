@@ -1,25 +1,44 @@
-FROM node:22-alpine3.21 as build
+
+
+FROM node:22-alpine as build
 WORKDIR /usr/src/app
+
+# Fake DB URL ONLY for Prisma Client generation
+ENV DATABASE_URL="postgresql://user:pass@localhost:5432/dummy"
+
+# Install all deps (including dev) to allow prisma generate and build
 COPY ./package*.json ./
 RUN npm install
+
+# Copy prisma files and config for generate
+COPY prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+
+# Copy the rest of the source and build
 COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-FROM node:22-alpine3.21 as production
+
+FROM node:22-alpine as production
 ENV TZ=Africa/Lagos
 ENV NODE_ENV=production
 WORKDIR /usr/src/app
+
+# Only install production dependencies
 COPY ./package*.json ./
-COPY ./prisma ./prisma
 RUN npm install --omit=dev --ignore-scripts
-RUN npx prisma generate
+
+# Copy prisma schema (optional at runtime) and the generated Prisma client from build stage
+COPY ./prisma ./prisma
+COPY prisma.config.ts ./prisma.config.ts
+COPY --from=build /usr/src/app/node_modules/.prisma /usr/src/app/node_modules/.prisma
+COPY --from=build /usr/src/app/node_modules/@prisma /usr/src/app/node_modules/@prisma
+COPY --from=build /usr/src/app/node_modules/@prisma/client /usr/src/app/node_modules/@prisma/client
+
+# Copy the compiled application
 COPY --from=build /usr/src/app/dist ./dist
 
-RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
-USER nestjs
-
-HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8000) + '/api/v1', (r) => r.statusCode < 500 ? process.exit(0) : process.exit(1)).on('error', () => process.exit(1))"
-
+# Start the app
 CMD ["node", "dist/src/main.js"]
+
