@@ -4,26 +4,32 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
-import { ProjectsService } from '../services';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(private readonly configService: ConfigService) {}
 
-  async canActivate(context: ExecutionContext): Promise<boolean> {
+  canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest();
 
-    // Support both styles
     const apiKey =
       request.headers['x-api-key'] ||
       request.headers['authorization']?.replace(/^Bearer\s+/i, '');
 
-    if (!apiKey || typeof apiKey !== 'string') {
-      throw new UnauthorizedException('API key is required');
+    const expectedApiKey =
+      this.configService.get<string>('RETRYLENS_API_KEY');
+
+    if (!expectedApiKey) {
+      throw new Error('RETRYLENS_API_KEY is not configured');
     }
 
-    const project = await this.projectsService.findProjectByApiKey(apiKey);
-    request.project = project; // attach for later use
+    if (
+      typeof apiKey !== 'string' ||
+      apiKey !== expectedApiKey
+    ) {
+      throw new UnauthorizedException('Invalid API key');
+    }
 
     return true;
   }

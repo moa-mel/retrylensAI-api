@@ -15,7 +15,6 @@ model Project {
   id        Int        @id @default(autoincrement())
   name      String
   slug      String     @unique
-  apiKey    String     @unique
   createdAt DateTime   @default(now())
   incidents Incident[]
 }
