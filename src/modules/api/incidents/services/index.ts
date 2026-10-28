@@ -5,14 +5,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 
 import { InjectRedis } from '@nestjs-modules/ioredis';
 import Redis from 'ioredis';
 import { AnalysisService } from '../../analysis/services';
 import { ReplayService } from '../../replay/services';
 import { Incident, IncidentDiagnosis, ReplayScenario } from '../interfaces';
-import { ReplayIncidentsDto } from '../dtos';
+import { IngestIncidentDto, ReplayIncidentsDto } from '../dtos';
 import { PrismaService } from '@/modules/core/prisma/services';
 
 const include = {
@@ -231,5 +231,31 @@ export class IncidentsService {
 
     return this.fetchIncidentById(String(incidentId));
   }
+
+  async ingest(dto: IngestIncidentDto, projectId: number) {
+  const requestId = dto.requestId || randomUUID();
+
+  const incident = await this.prisma.incident.create({
+    data: {
+      title: dto.title,
+      method: dto.method,
+      path: dto.path,
+      statusCode: dto.statusCode,
+      requestId,
+      timestamp: new Date(),
+      headers: dto.headers ?? {},
+      payload: dto.payload ?? {},
+      responseBody: dto.responseBody ?? {},
+      logs: dto.logs ?? [],
+      scenario: dto.scenario ?? 'http_server_error',
+      projectId,
+    },
+  });
+
+  return {
+    id: incident.id,
+    requestId: incident.requestId,
+  };
+}
 
 }

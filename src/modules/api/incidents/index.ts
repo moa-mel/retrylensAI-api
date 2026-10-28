@@ -4,11 +4,13 @@ import { IncidentsController } from "./controllers";
 import { AnalysisModule } from "../analysis";
 import { ReplayModule } from "../replay";
 import { IncidentCaptureMiddleware } from "./middleware/incident-capture.middleware";
+import { ProjectsModule } from "../projects";
 
 @Module({
   imports: [
     AnalysisModule,
     ReplayModule,
+    ProjectsModule
   ],
   providers: [
     IncidentsService,

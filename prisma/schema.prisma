@@ -11,6 +11,15 @@ datasource db {
   provider = "postgresql"
 }
 
+model Project {
+  id        Int        @id @default(autoincrement())
+  name      String
+  slug      String     @unique
+  apiKey    String     @unique
+  createdAt DateTime   @default(now())
+  incidents Incident[]
+}
+
 model Incident {
   id             Int         @id @default(autoincrement())
   title          String
@@ -25,6 +34,8 @@ model Incident {
   logs           String[]
   scenario       String
   replayVerified Boolean     @default(false)
+  projectId      Int?
+  project        Project?    @relation(fields: [projectId], references: [id], onDelete: SetNull)
   diagnoses      Diagnosis[]
   replays        ReplayRun[]
   createdAt      DateTime    @default(now())

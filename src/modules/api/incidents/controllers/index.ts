@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { IncidentsService } from '../services';
-import { ReplayIncidentsDto } from '../dtos';
+import { IngestIncidentDto, ReplayIncidentsDto } from '../dtos';
+import { ApiKeyGuard } from '../../projects/guards/api-key.guard';
 
 @Controller('incidents')
 export class IncidentsController {
@@ -28,5 +29,11 @@ export class IncidentsController {
         @Body() dto: ReplayIncidentsDto,
     ) {
         return this.incidentsService.replayIncidents(id, dto);
+    }
+
+    @Post('ingest')
+    @UseGuards(ApiKeyGuard)
+    async ingest(@Body() dto: IngestIncidentDto, @Req() req: any) {
+        return this.incidentsService.ingest(dto, req.project.id);
     }
 }
