@@ -232,30 +232,29 @@ export class IncidentsService {
     return this.fetchIncidentById(String(incidentId));
   }
 
-  async ingest(dto: IngestIncidentDto, projectId: number) {
-  const requestId = dto.requestId || randomUUID();
+  async ingest(dto: IngestIncidentDto) {
+    const requestId = dto.requestId || randomUUID();
 
-  const incident = await this.prisma.incident.create({
-    data: {
-      title: dto.title,
-      method: dto.method,
-      path: dto.path,
-      statusCode: dto.statusCode,
-      requestId,
-      timestamp: new Date(),
-      headers: dto.headers ?? {},
-      payload: dto.payload ?? {},
-      responseBody: dto.responseBody ?? {},
-      logs: dto.logs ?? [],
-      scenario: dto.scenario ?? 'http_server_error',
-      projectId,
-    },
-  });
+    const incident = await this.prisma.incident.create({
+      data: {
+        title: dto.title,
+        method: dto.method,
+        path: dto.path,
+        statusCode: dto.statusCode,
+        requestId,
+        timestamp: new Date(),
+        headers: dto.headers ?? {},
+        payload: dto.payload ?? {},
+        responseBody: dto.responseBody ?? {},
+        logs: dto.logs ?? [],
+        scenario: dto.scenario ?? 'http_server_error',
+      },
+    });
 
-  return {
-    id: incident.id,
-    requestId: incident.requestId,
-  };
-}
+    return {
+      id: incident.id,
+      requestId: incident.requestId,
+    };
+  }
 
 }

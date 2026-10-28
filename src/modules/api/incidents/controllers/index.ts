@@ -33,7 +33,7 @@ export class IncidentsController {
 
     @Post('ingest')
     @UseGuards(ApiKeyGuard)
-    async ingest(@Body() dto: IngestIncidentDto, @Req() req: any) {
-        return this.incidentsService.ingest(dto, req.project.id);
+    async ingest(@Body() dto: IngestIncidentDto) {
+        return this.incidentsService.ingest(dto);
     }
 }
