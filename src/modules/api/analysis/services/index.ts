@@ -25,7 +25,7 @@ const DiagnosisSchema = z.object({
 });
 
 const SYSTEM_PROMPT = `
-You are RetryLens AI, an evidence-driven webhook debugging assistant.
+You are RetryLens AI, an evidence-driven debugging assistant.
 
 Analyze the supplied HTTP request, response, and application logs.
 Identify the most likely root cause.
